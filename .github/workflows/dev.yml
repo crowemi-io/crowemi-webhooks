@@ -1,0 +1,82 @@
+name: Deploy Development
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_GITHUB_KEY }}
+  REGON: ${{ secrets.GCP_REGION }}
+  GH_USERNAME: ${{ secrets.GH_USERNAME }}
+  GH_PAT: ${{ secrets.GH_PAT }}
+  IMAGE_NAME: "crowemi-webhooks-dev"
+  ARTIFACT_REGISTRY: "us-west1-docker.pkg.dev"
+  REGISTRY_NAME: "crowemi-io"
+  TF_CLOUD_ORGANIZATION: "crowemi-io"
+  TF_API_TOKEN: "${{ secrets.TF_TOKEN }}"
+  TF_WORKSPACE: "crowemi-webhooks-dev"
+  TF_SERVICE_NAME: ${{ secrets.TF_SERVICE_NAME }}
+  TF_REGION: ${{ secrets.GCP_REGION }}
+  CONFIG_DIRECTORY: "./"
+
+jobs:
+  setup-build-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ env.SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -t dev --build-arg="GH_USERNAME=${{ env.GH_USERNAME }}" --build-arg="GH_PAT=${{ env.GH_PAT }}" .
+          docker push  ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  terraform:
+    needs: setup-build-publish
+    name: "Terraform Apply"
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_docker_image_tag: "\"${{ github.sha }}\""
+      TF_VAR_service_name: "\"${{ secrets.TF_SERVICE_NAME }}\""
+      TF_VAR_google_region: "\"${{ secrets.GCP_REGION }}\""
+      TF_VAR_env: "\"dev\""
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+        id: apply-upload
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ${{ env.CONFIG_DIRECTORY }}
+
+      - name: Create Apply Run
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        id: apply-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+
+      - name: Apply
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+        if: fromJSON(steps.apply-run.outputs.payload).data.attributes.actions.IsConfirmable
+        id: apply
+        with:
+          run: ${{ steps.apply-run.outputs.run_id }}
+          comment: "Apply Run from GitHub Actions CI ${{ github.sha }}"
