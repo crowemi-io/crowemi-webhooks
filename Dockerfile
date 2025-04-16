@@ -9,8 +9,8 @@ COPY . .
 RUN go install -v ./...
 
 FROM golang:1.23-alpine
-COPY --from=build /go/bin/crowemibot /go/crowemibot
+COPY --from=build /go/bin/crowemiwebhooks /go/crowemiwebhooks
 
 EXPOSE 8003
 
-CMD ["/go/crowemibot"]
+CMD ["/go/crowemiwebhooks"]
