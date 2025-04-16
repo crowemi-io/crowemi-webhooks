@@ -5,15 +5,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+
+	"github.com/crowemi-io/crowemi-webhooks/api"
+	webhooks "github.com/crowemi-io/crowemi-webhooks/internal/config"
 )
 
-func config() Config {
+func config() webhooks.Webhooks {
 	value := os.Getenv("CONFIG")
 	decode, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		println("Error decoding config:", err)
 	}
-	c := Config{}
+	c := webhooks.Webhooks{}
 	err = json.Unmarshal(decode, &c)
 	if err != nil {
 		println("Error unmarshalling config:", err)
@@ -23,8 +26,10 @@ func config() Config {
 
 func main() {
 	config := config()
-	println("Client Name: ", config.Crowemi.ClientName)
+	handlers := api.Handlers{
+		Config: &config,
+	}
 
-	http.HandleFunc("POST /v1/telegram/{id}", telegramHandler)
+	http.HandleFunc("/v1/telegram/{id}", func(w http.ResponseWriter, r *http.Request) { handlers.TelegramHandler(w, r) })
 	http.ListenAndServe(":8003", nil)
 }

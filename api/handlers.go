@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -6,12 +6,16 @@ import (
 	"io"
 	"net/http"
 
-	telegram "github.com/crowemi-io/crowemi-webhooks/internal/service/telegram"
+	"github.com/crowemi-io/crowemi-webhooks/internal/config"
+	telegram "github.com/crowemi-io/crowemi-webhooks/internal/service"
 )
 
-func telegramHandler(w http.ResponseWriter, r *http.Request) {
+type Handlers struct {
+	Config *config.Webhooks
+}
+
+func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	ret := fmt.Sprintf(`{"status":"ok", "id": %s }`, r.PathValue("id"))
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -28,8 +32,8 @@ func telegramHandler(w http.ResponseWriter, r *http.Request) {
 	var bot telegram.Bot
 	switch r.PathValue("id") {
 	case telegram.CROWEMI_TRADES:
-		bot = telegram.CrowemiTradesBot{
-			Config: Config{},
+		bot = telegram.CrowemiTrades{
+			Config: *h.Config,
 		}
 	default:
 		fmt.Println("Unknown bot id")
@@ -44,5 +48,5 @@ func telegramHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(ret))
+	w.WriteHeader(http.StatusOK)
 }
