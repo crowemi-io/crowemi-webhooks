@@ -25,7 +25,7 @@ func (c CrowemiTrades) HandleMessage(update Update) error {
 			return fmt.Errorf("error creating request: %v", err)
 		}
 
-		token, err := pkg.GetAuth()
+		token, err := pkg.GetAuth(c.Config.Crowemi.Uri["crowemi-trades"])
 		if err != nil {
 			return fmt.Errorf("error getting token: %v", err)
 		}

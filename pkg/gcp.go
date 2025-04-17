@@ -4,29 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/oauth2/google"
+	"google.golang.org/api/idtoken"
 )
 
-func GetAuth() (string, error) {
-
+func GetAuth(targetAudience string) (string, error) {
 	ctx := context.Background()
-	ret := ""
 
-	// Fetch default credentials
-	creds, err := google.FindDefaultCredentials(ctx)
+	// Fetch an identity token for the target audience (Cloud Run URL)
+	tokenSource, err := idtoken.NewTokenSource(ctx, targetAudience)
 	if err != nil {
-		fmt.Printf("Error finding default credentials: %v\n", err)
-		return ret, err
+		fmt.Printf("Error creating token source: %v\n", err)
+		return "", err
 	}
 
-	// Get the token from the credentials
-	token, err := creds.TokenSource.Token()
+	token, err := tokenSource.Token()
 	if err != nil {
-		fmt.Printf("Error retrieving token: %v\n", err)
-		return ret, err
+		fmt.Printf("Error retrieving identity token: %v\n", err)
+		return "", err
 	}
 
-	// Print the access token
+	// Return the identity token
 	return token.AccessToken, nil
-
 }
