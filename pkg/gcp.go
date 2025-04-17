@@ -27,7 +27,6 @@ func GetAuth() (string, error) {
 	}
 
 	// Print the access token
-	fmt.Printf("Access Token: %s\n", token.AccessToken)
 	return token.AccessToken, nil
 
 }
