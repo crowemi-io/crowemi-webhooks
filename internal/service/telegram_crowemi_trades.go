@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/crowemi-io/crowemi-webhooks/internal/config"
+	"github.com/crowemi-io/crowemi-webhooks/pkg"
 )
 
 type CrowemiTrades struct {
@@ -24,12 +25,24 @@ func (c CrowemiTrades) HandleMessage(update Update) error {
 			return fmt.Errorf("error creating request: %v", err)
 		}
 
+		token, err := pkg.GetAuth()
+		if err != nil {
+			return fmt.Errorf("error getting token: %v", err)
+		}
+
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		} else {
+			fmt.Println("Token is empty")
+		}
 		// TODO: add these to common library
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("crowemi-client-id", c.Config.Crowemi.ClientId)
 		req.Header.Set("crowemi-client-secret-key", c.Config.Crowemi.ClientSecretKey)
 		req.Header.Set("crowemi-client-name", c.Config.Crowemi.ClientName)
 		req.Header.Set("crowemi-session-id", "crowemi-client-session-id")
+
+		// TODO: add Bearer token
 
 		resp, err := client.Do(req)
 		defer resp.Body.Close()
