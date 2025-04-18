@@ -31,8 +31,8 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 		messageText = update.Message.Text
 	} else if update.ChannelPost != nil {
 		chatID = fmt.Sprintf("%v", update.ChannelPost.Chat.ID)
-		fromID = update.Message.From.ID
-		messageText = update.Message.Text
+		fromID = update.ChannelPost.SenderChat.ID
+		messageText = update.ChannelPost.Text
 	} else {
 		fmt.Println("Unknown message type")
 		return
