@@ -25,6 +25,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 	var fromID int64
 	var messageText string
 
+	// what kinds of message are we dealing with?
 	if update.Message != nil {
 		chatID = fmt.Sprintf("%v", update.Message.Chat.ID)
 		fromID = update.Message.From.ID
