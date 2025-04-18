@@ -67,6 +67,7 @@ type bot struct {
 	ChannelId    string `json:"channel_id"`
 	Token        string `json:"token"`
 	AllowedUsers []int  `json:"allowed_users"`
+	AllowedChats []int  `json:"allowed_chats"`
 }
 
 type Webhooks struct {

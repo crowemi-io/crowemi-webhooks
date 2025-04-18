@@ -14,20 +14,35 @@ type CrowemiTrades struct {
 }
 
 func (c CrowemiTrades) HandleMessage(update Update) {
-	// Handle the message for Crowemi Trades Bot
-	if c.Config.Crowemi.Debug {
-		fmt.Println("Crowemi Trades Bot: Received message:", update)
-	}
 
+	// Handle the message for Crowemi Trades Bot
 	botConfig := c.Config.BotConfig[CROWEMI_TRADES]
 	botToken := botConfig.Token
-	chatID := fmt.Sprintf("%v", update.Message.Chat.ID)
 
-	if c.ValidateUser(int(update.Message.From.ID)) {
-		switch update.Message.Text {
+	// this determines what chat to respond to
+	var chatID string
+	// this determines who sent the message
+	var fromID int64
+	var messageText string
+
+	if update.Message != nil {
+		chatID = fmt.Sprintf("%v", update.Message.Chat.ID)
+		fromID = update.Message.From.ID
+		messageText = update.Message.Text
+	} else if update.ChannelPost != nil {
+		chatID = fmt.Sprintf("%v", update.ChannelPost.Chat.ID)
+		fromID = update.Message.From.ID
+		messageText = update.Message.Text
+	} else {
+		fmt.Println("Unknown message type")
+		return
+	}
+
+	if c.ValidateMessage(int(fromID)) {
+		switch messageText {
 		case "/status":
 
-			err := sendMessage(botToken, chatID, fmt.Sprintf("Sure, @%s! Let me check the status for you.", update.Message.From.Username))
+			err := sendMessage(botToken, chatID, "Sure! Let me check the status for you.")
 			if err != nil {
 				fmt.Println("Error sending message:", err)
 				return
@@ -95,7 +110,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			return
 		}
 	} else {
-		_ = sendMessage(botToken, chatID, fmt.Sprintf("%s you are not allowed to use this bot.", update.Message.From.Username))
+		_ = sendMessage(botToken, chatID, "You are not allowed to use this bot.")
 		return
 	}
 }
