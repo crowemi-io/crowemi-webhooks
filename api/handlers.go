@@ -16,12 +16,18 @@ type Handlers struct {
 
 func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	// its always all good
+	w.WriteHeader(http.StatusOK)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("Error reading body:", err)
 		return
 	}
+	if h.Config.Crowemi.Debug {
+		fmt.Println("Request Body:", string(body))
+	}
+
 	var update telegram.Update
 	err = json.Unmarshal(body, &update)
 	if err != nil {
@@ -32,8 +38,9 @@ func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 	var bot telegram.Bot
 	switch r.PathValue("id") {
 	case telegram.CROWEMI_TRADES:
+		fmt.Println("Running crowemi-trades bot")
 		bot = telegram.CrowemiTrades{
-			Config: *h.Config,
+			BotBase: telegram.BotBase{Config: *h.Config},
 		}
 	default:
 		fmt.Println("Unknown bot id")
@@ -41,12 +48,5 @@ func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"status":"error", "message":"unknown bot id"}`))
 	}
 
-	err = bot.HandleMessage(update)
-	if err != nil {
-		fmt.Println("Error handling message:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	bot.HandleMessage(update)
 }

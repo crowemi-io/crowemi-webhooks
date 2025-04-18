@@ -4,23 +4,26 @@ resource "google_service_account" "this" {
   description  = "A service account for ${local.service} ${local.env}"
 }
 
-# data "google_iam_policy" "this" {
-#   binding {
-#     role = "roles/run.invoker"
-#     members = [
-#       "serviceAccount:${google_service_account.this.email}",
-#     ]
-#   }
-# }
-# resource "google_cloud_run_service_iam_policy" "this" {
-#   location = google_cloud_run_v2_service.this.location
-#   project  = google_cloud_run_v2_service.this.project
-#   service  = google_cloud_run_v2_service.this.name
 
-#   policy_data = data.google_iam_policy.this.policy_data
-# }
+resource "google_cloud_run_service_iam_policy" "unauthenticated" {
+  location    = local.region
+  project     = local.project
+  service     = google_cloud_run_v2_service.this.name
+
+  policy_data = data.google_iam_policy.unauthenticated_access.policy_data
+}
+
+data "google_iam_policy" "unauthenticated_access" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "allUsers",
+    ]
+  }
+}
 
 resource "google_project_iam_member" "crowemi-log" {
+  # TODO: move this to crowemi-log module
   project = local.project
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.this.email}"
