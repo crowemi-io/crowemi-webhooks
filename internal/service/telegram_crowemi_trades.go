@@ -15,6 +15,10 @@ type CrowemiTrades struct {
 
 func (c CrowemiTrades) HandleMessage(update Update) {
 	// Handle the message for Crowemi Trades Bot
+	if c.Config.Crowemi.Debug {
+		fmt.Println("Crowemi Trades Bot: Received message:", update)
+	}
+
 	botConfig := c.Config.BotConfig[CROWEMI_TRADES]
 	botToken := botConfig.Token
 	chatID := fmt.Sprintf("%v", update.Message.Chat.ID)

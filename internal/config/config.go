@@ -35,7 +35,6 @@ func (c crowemi) CreateHeaders(req *http.Request, audience string, sessionID str
 	}
 	return nil
 }
-
 func (c crowemi) GetAuth(targetAudience string) (string, error) {
 	ctx := context.Background()
 
