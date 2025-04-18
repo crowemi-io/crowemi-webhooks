@@ -33,7 +33,7 @@ func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.PathValue("id") {
 	case telegram.CROWEMI_TRADES:
 		bot = telegram.CrowemiTrades{
-			Config: *h.Config,
+			BotBase: telegram.BotBase{Config: *h.Config},
 		}
 	default:
 		fmt.Println("Unknown bot id")
@@ -41,12 +41,7 @@ func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"status":"error", "message":"unknown bot id"}`))
 	}
 
-	err = bot.HandleMessage(update)
-	if err != nil {
-		fmt.Println("Error handling message:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
+	bot.HandleMessage(update)
+	// its always all good
 	w.WriteHeader(http.StatusOK)
 }

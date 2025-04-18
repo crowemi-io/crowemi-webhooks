@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/crowemi-io/crowemi-webhooks/internal/config"
 )
 
 const (
@@ -41,10 +43,25 @@ type Chat struct {
 }
 
 type Bot interface {
-	HandleMessage(update Update) error
+	HandleMessage(update Update)
+}
+
+type BotBase struct {
+	Config config.Webhooks
+}
+
+func (b BotBase) ValidateUser(userID int) bool {
+	// Validate user ID
+	for _, id := range b.Config.BotConfig[CROWEMI_TRADES].AllowedUsers {
+		if id == userID {
+			return true
+		}
+	}
+	return false
 }
 
 // TODO: make these inline anonymous structs
+// TODO: these need to GO!
 type StockData struct {
 	BuyPrice     float64 `json:"buy_price"`
 	CurrentPrice float64 `json:"current_price"`
