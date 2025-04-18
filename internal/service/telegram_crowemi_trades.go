@@ -23,7 +23,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 		switch update.Message.Text {
 		case "/status":
 
-			err := sendMessage(botToken, chatID, fmt.Sprintf("Sure, %s! Let me check the status for you.", update.Message.From.Username))
+			err := sendMessage(botToken, chatID, fmt.Sprintf("Sure, @%s! Let me check the status for you.", update.Message.From.Username))
 			if err != nil {
 				fmt.Println("Error sending message:", err)
 				return
@@ -34,6 +34,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
 				// TODO: add logging
+				fmt.Println("Error creating request:", err)
 				_ = sendMessage(botToken, chatID, DEFAULT_ERROR)
 				return
 			}
@@ -41,6 +42,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			err = c.Config.Crowemi.CreateHeaders(req, c.Config.Crowemi.Uri["crowemi-trades"], "")
 			if err != nil {
 				// TODO: add logging
+				fmt.Println("Error creating headers:", err)
 				_ = sendMessage(botToken, chatID, DEFAULT_ERROR)
 				return
 			}
@@ -57,6 +59,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
+				fmt.Println("Error reading response body:", err)
 				_ = sendMessage(botToken, chatID, DEFAULT_ERROR)
 				return
 			}
@@ -73,7 +76,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 				} else {
 					symbol = "🔴"
 				}
-				message := fmt.Sprintf("%s %s: target %f; current %f; delta %f\n", symbol, key, value.BuyPrice, value.CurrentPrice, value.Diff)
+				message := fmt.Sprintf("%s %s: target %.2f; current %.2f; delta %.2f", symbol, key, value.BuyPrice, value.CurrentPrice, value.Diff)
 				err := sendMessage(botToken, chatID, message)
 				if err != nil {
 					fmt.Println("Error sending message:", err)

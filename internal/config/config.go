@@ -28,6 +28,7 @@ func (c crowemi) CreateHeaders(req *http.Request, audience string, sessionID str
 	if c.Env == "dev" || c.Env == "prod" {
 		token, err := c.GetAuth(audience)
 		if err != nil {
+			fmt.Printf("Error getting auth token: %v\n", err)
 			return err
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
