@@ -66,6 +66,9 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			var url string
 			if len(args) == 1 {
 				url = fmt.Sprintf("%sstatus/%s", c.Config.Crowemi.Uri["crowemi-trades"], args[0])
+			} else if len(args) > 1 {
+				_ = sendMessage(botToken, chatID, "Too many arguments. Please provide one symbol. /status <symbol>")
+				return
 			} else {
 				url = fmt.Sprintf("%sstatus/", c.Config.Crowemi.Uri["crowemi-trades"])
 			}
@@ -126,12 +129,9 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 		case "/summary":
 			return
 		default:
-			m := "Unknown command. Please try again."
-			err := sendMessage(botToken, chatID, m)
-			if err != nil {
-				fmt.Println(m)
-				fmt.Println("Error sending message:", err)
-			}
+			m := fmt.Sprintf("Unknown command: %s", command)
+			fmt.Println(m)
+			_ = sendMessage(botToken, chatID, m)
 			return
 		}
 	} else {
