@@ -109,6 +109,11 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			json.Unmarshal(body, status)
 			fmt.Println("Status:", status)
 
+			if len(*status) == 0 {
+				_ = sendMessage(botToken, chatID, "No data found.")
+				return
+			}
+
 			for _, value := range *status {
 				// 🔴 KO: target 73.51; current 73.18; delta -0.33
 				var symbol string
