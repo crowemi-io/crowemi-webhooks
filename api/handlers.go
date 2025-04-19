@@ -33,7 +33,6 @@ func (h *Handlers) TelegramHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error unmarshalling body:", err)
 	}
-	fmt.Println(update)
 
 	var bot telegram.Bot
 	switch r.PathValue("id") {
