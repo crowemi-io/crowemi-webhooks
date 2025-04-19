@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 const DEFAULT_ERROR = "Something went wrong. Check my logs for details."
@@ -39,8 +40,20 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 		return
 	}
 
+	input := strings.Split(messageText, " ")
+	var command string
+	var args []string
+	if len(input) > 0 {
+		command = input[0]
+		if len(input) > 1 {
+			args = input[1:]
+		}
+	} else {
+		command = ""
+	}
+
 	if c.ValidateMessage(int(fromID)) {
-		switch messageText {
+		switch command {
 		case "/status":
 
 			err := sendMessage(botToken, chatID, "Sure! Let me check the status for you.")
@@ -50,7 +63,15 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			}
 
 			client := http.Client{}
-			url := fmt.Sprintf("%sstatus/", c.Config.Crowemi.Uri["crowemi-trades"])
+			var url string
+			if len(args) == 1 {
+				url = fmt.Sprintf("%sstatus/%s", c.Config.Crowemi.Uri["crowemi-trades"], args[0])
+			} else if len(args) > 1 {
+				_ = sendMessage(botToken, chatID, "Too many arguments. Please provide one symbol. /status <symbol>")
+				return
+			} else {
+				url = fmt.Sprintf("%sstatus/", c.Config.Crowemi.Uri["crowemi-trades"])
+			}
 			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
 				// TODO: add logging
@@ -88,7 +109,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 			json.Unmarshal(body, status)
 			fmt.Println("Status:", status)
 
-			for key, value := range *status {
+			for _, value := range *status {
 				// 🔴 KO: target 73.51; current 73.18; delta -0.33
 				var symbol string
 				if value.Diff > 0 {
@@ -96,7 +117,7 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 				} else {
 					symbol = "🔴"
 				}
-				message := fmt.Sprintf("%s %s: target %.2f; current %.2f; delta %.2f", symbol, key, value.BuyPrice, value.CurrentPrice, value.Diff)
+				message := fmt.Sprintf("%s %s: target %.2f; current %.2f; delta %.2f", symbol, value.Symbol, value.BuyPrice, value.CurrentPrice, value.Diff)
 				err := sendMessage(botToken, chatID, message)
 				if err != nil {
 					fmt.Println("Error sending message:", err)
@@ -108,6 +129,9 @@ func (c CrowemiTrades) HandleMessage(update Update) {
 		case "/summary":
 			return
 		default:
+			m := fmt.Sprintf("Unknown command: %s", command)
+			fmt.Println(m)
+			_ = sendMessage(botToken, chatID, m)
 			return
 		}
 	} else {

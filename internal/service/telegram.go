@@ -77,11 +77,12 @@ func (b BotBase) ValidateMessage(ID int) bool {
 // TODO: make these inline anonymous structs
 // TODO: these need to GO!
 type StockData struct {
+	Symbol       string  `json:"symbol"`
 	BuyPrice     float64 `json:"buy_price"`
 	CurrentPrice float64 `json:"current_price"`
 	Diff         float64 `json:"diff"`
 }
-type StockMap map[string]StockData
+type StockMap []StockData
 
 func sendMessage(bot_id string, channel_id string, message string) error {
 	// uri = "https://api.telegram.org/bot{bot_id}/sendMessage?chat_id={channel_id}&text={message}"
